@@ -1,0 +1,2623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geovisor PDM Chiclayo - Lambayeque</title>
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#map {
+    width: 100%;
+    height: 100vh;
+}
+
+/* ================================
+   LEYENDAS
+================================ */
+.legend-box {
+    background: rgba(255,255,255,0.96);
+    padding: 10px 12px;
+    border-radius: 6px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    min-width: 245px;
+    max-width: 330px;
+    max-height: 55vh;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 17px;
+}
+
+.legend-box h4 {
+    margin: 0 0 8px 0;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-line {
+    width: 28px;
+    height: 0;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.legend-polygon {
+    width: 17px;
+    height: 13px;
+    margin-right: 8px;
+    border: 1px solid #777;
+    flex-shrink: 0;
+}
+
+/* ================================
+   POPUPS
+================================ */
+.popup-box {
+    min-width: 235px;
+    font-size: 13px;
+    line-height: 19px;
+}
+
+.popup-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 9px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #ccc;
+}
+
+.popup-row {
+    margin-bottom: 6px;
+}
+
+/* ================================
+   MENSAJE
+================================ */
+#mensajeCarga {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: white;
+    padding: 8px 14px;
+    border-radius: 5px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+    font-size: 12px;
+}
+
+/* ==========================================================
+   BUSCADOR
+========================================================== */
+
+.control-buscador {
+    background: rgba(255,255,255,0.98);
+    padding: 10px;
+    border-radius: 7px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    width: 285px;
+    border: 1px solid #cfcfcf;
+}
+
+.control-buscador .titulo-buscador {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #222;
+}
+
+.control-buscador select,
+.control-buscador input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 7px;
+    padding: 8px 9px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    font-size: 12px;
+    background: #fff;
+}
+
+.control-buscador input:focus,
+.control-buscador select:focus {
+    outline: 2px solid rgba(50,110,180,0.25);
+    border-color: #777;
+}
+
+.control-buscador button {
+    width: 100%;
+    padding: 8px;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    background: #333;
+    color: #fff;
+}
+
+.control-buscador button:hover {
+    background: #222;
+}
+
+.resultado-buscador {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #555;
+    line-height: 15px;
+    max-height: 190px;
+    overflow-y: auto;
+}
+
+.resultado-item {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fff;
+    padding: 7px 4px;
+    cursor: pointer;
+    font-size: 11px;
+    color: #222;
+}
+
+.resultado-item:hover {
+    background: #f1f1f1;
+}
+
+.resultado-tipo {
+    font-size: 10px;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.resultado-nombre {
+    font-weight: 700;
+}
+
+.resultado-detalle {
+    color: #666;
+}
+
+
+/* ==========================================================
+   CONTROL DINÁMICO DE TRANSPARENCIA
+========================================================== */
+
+.control-transparencia {
+    background: rgba(255,255,255,0.97);
+    padding: 9px 11px;
+    border-radius: 6px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    width: 235px;
+    font-size: 12px;
+}
+
+.control-transparencia .titulo-transparencia {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.control-transparencia .fila-transparencia {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.control-transparencia input[type="range"] {
+    flex: 1;
+    cursor: pointer;
+}
+
+.control-transparencia .valor-transparencia {
+    width: 38px;
+    text-align: right;
+    font-weight: bold;
+}
+
+
+/* ==========================================================
+   LEYENDA TEMÁTICA PDM
+========================================================== */
+
+.legend-pdm {
+    background: rgba(255,255,255,0.97);
+    padding: 10px 12px;
+    border-radius: 7px;
+    box-shadow: 0 1px 7px rgba(0,0,0,0.35);
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+    height: 520px;
+    min-height: 520px;
+    max-height: 520px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: 12px;
+    line-height: 17px;
+}
+
+
+.legend-pdm-title {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 9px;
+    padding-bottom: 7px;
+    border-bottom: 2px solid #333;
+}
+
+.legend-pdm-section {
+    font-size: 12px;
+    font-weight: 800;
+    margin: 8px 0 3px 0;
+    padding: 6px 2px 4px 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+}
+
+.legend-pdm-section:hover {
+    background: #f2f2f2;
+}
+
+.legend-pdm-section .legend-arrow {
+    font-size: 10px;
+    width: 12px;
+}
+
+.legend-pdm-section .legend-check {
+    margin: 0 3px 0 0;
+    cursor: pointer;
+}
+
+.legend-pdm-subsection {
+    font-size: 11px;
+    font-weight: 700;
+    margin: 5px 0 3px 14px;
+    padding: 5px 4px 4px 8px;
+    border-left: 2px solid #777;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+}
+
+.legend-pdm-subsection:hover {
+    background: #f2f2f2;
+}
+
+.legend-pdm-subsection .legend-arrow {
+    font-size: 9px;
+    width: 10px;
+}
+
+.legend-pdm-subsection .legend-check {
+    margin: 0 3px 0 0;
+    cursor: pointer;
+}
+
+.legend-pdm-empty {
+    color: #888;
+    font-size: 11px;
+    margin-left: 8px;
+    font-style: italic;
+}
+
+.legend-pdm-item {
+    display: flex;
+    align-items: center;
+    margin: 4px 0 4px 8px;
+}
+
+.legend-pdm-item .legend-polygon,
+.legend-pdm-item .legend-line {
+    margin-right: 8px;
+}
+
+.leaflet-control-layers::before {
+    content: "MAPA BASE";
+    display: block;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 2px 0 7px 0;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 7px;
+}
+
+
+/* ==========================================================
+   FICHA EMERGENTE INSTITUCIONAL
+========================================================== */
+.popup-ficha-pdm{
+    min-width:260px;
+    max-width:320px;
+    font-family:Arial, Helvetica, sans-serif;
+    color:#222;
+}
+.popup-ficha-pdm .ficha-cabecera{
+    margin:-2px -2px 10px -2px;
+    padding:9px 10px;
+    background:#1F4E79;
+    color:#fff;
+    border-radius:4px 4px 0 0;
+}
+.popup-ficha-pdm .ficha-titulo{
+    font-size:14px;
+    font-weight:800;
+    line-height:18px;
+    margin:0;
+}
+.popup-ficha-pdm .ficha-subtitulo{
+    margin-top:3px;
+    font-size:10px;
+    opacity:.9;
+}
+.popup-ficha-pdm .ficha-dato{
+    display:grid;
+    grid-template-columns:88px 1fr;
+    gap:8px;
+    padding:6px 2px;
+    border-bottom:1px solid #e6e6e6;
+    font-size:12px;
+    line-height:16px;
+}
+.popup-ficha-pdm .ficha-dato:last-of-type{
+    border-bottom:0;
+}
+.popup-ficha-pdm .ficha-label{
+    font-weight:700;
+    color:#555;
+}
+.popup-ficha-pdm .ficha-valor{
+    font-weight:600;
+    color:#222;
+    word-break:break-word;
+}
+.popup-ficha-pdm .ficha-pie{
+    margin-top:9px;
+    padding-top:7px;
+    border-top:1px solid #ddd;
+    font-size:9px;
+    line-height:13px;
+    color:#777;
+}
+
+</style>
+
+<style id="transparencia-integrada-css">
+.pdm-opacity-wrap{
+    margin-left:auto;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    flex:0 0 112px;
+    white-space:nowrap;
+}
+.pdm-opacity-wrap input[type="range"]{
+    width:72px;
+    height:12px;
+    margin:0;
+    cursor:pointer;
+}
+.pdm-opacity-value{
+    width:28px;
+    text-align:right;
+    font-size:9px;
+    font-weight:700;
+    color:#555;
+}
+.legend-pdm-section .pdm-opacity-wrap{
+    margin-right:2px;
+}
+.legend-pdm-subsection .pdm-opacity-wrap{
+    margin-right:2px;
+}
+.legend-pdm-section,
+.legend-pdm-subsection{
+    min-width:0;
+}
+.legend-pdm-section > span:last-child,
+.legend-pdm-subsection > span:last-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="map"></div>
+<div id="mensajeCarga"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+/* ==========================================================
+   1. MAPA
+========================================================== */
+
+const map = L.map("map", {
+    preferCanvas: true,
+    zoomControl: true
+}).setView([-6.85, -79.85], 10);
+
+
+/* ==========================================================
+   2. MAPAS BASE
+========================================================== */
+
+const osm = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 19
+    }
+);
+
+const satelite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/" +
+    "World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+        attribution: "Tiles &copy; Esri",
+        maxZoom: 19
+    }
+);
+
+osm.addTo(map);
+
+
+/* ==========================================================
+   3. RUTAS
+========================================================== */
+
+const rutaZonificacion =
+    "../GEOJSON/WEB/P_140101_Zonificacion_WEB_OPT_WGS84.geojson";
+
+const rutaAmbito = "../GEOJSON/WEB/P_140101_Ambito_Intervencion_WEB.geojson";
+
+const rutaVial =
+    "../GEOJSON/MAESTROS/P_140101_Sistema_vial_propuesto.geojson";
+
+
+/* ==========================================================
+   4. COLORES DE ZONIFICACIÓN
+========================================================== */
+
+const coloresZonificacion = {
+
+    "RDA": "#F5B82E",
+    "RDM": "#FFF200",
+    "RDB": "#FFF7C7",
+
+    "CV": "#F28E8E",
+    "CZ": "#F05A5A",
+    "CM": "#FF0000",
+    "CE": "#8B0000",
+
+    "I3": "#8E44AD",
+    "I2": "#9B59B6",
+    "I1": "#B47DB5",
+
+    "E1": "#3498DB",
+    "E2": "#0066CC",
+    "E3": "#003399",
+
+    "H1": "#66D9E8",
+    "H2": "#3BC4D5",
+    "H3": "#00A9C7",
+
+    "OU": "#BDBDBD",
+
+    "ZHR": "#FFFFFF",
+    "ZRP": "#63C132",
+    "ZRE": "#FFFFFF",
+    "AUR": "#FFFFFF",
+
+    "ZA": "#548235",
+    "ZTP": "#FFFFFF",
+
+    "ZPE": "#70AD47",
+    "ZPA": "#C8A96B",
+    "ZPR": "#A9B98F"
+};
+
+
+/* ==========================================================
+   5. NOMBRES DE ZONIFICACIÓN
+========================================================== */
+
+const nombresZonificacion = {
+
+    "RDA": "RESIDENCIAL DE DENSIDAD ALTA",
+    "RDM": "RESIDENCIAL DE DENSIDAD MEDIA",
+    "RDB": "RESIDENCIAL DE DENSIDAD BAJA",
+
+    "CV": "COMERCIO VECINAL",
+    "CZ": "COMERCIO ZONAL",
+    "CM": "COMERCIO METROPOLITANO",
+    "CE": "COMERCIO ESPECIALIZADO",
+
+    "I3": "GRAN INDUSTRIA",
+    "I2": "INDUSTRIA LIVIANA",
+    "I1": "INDUSTRIA ELEMENTAL Y COMPLEMENTARIA",
+
+    "E1": "EDUCACION BASICA",
+    "E2": "EDUCACION SUPERIOR TECNOLOGICA",
+    "E3": "EDUCACION SUPERIOR UNIVERSITARIA",
+
+    "H1": "POSTA MEDICA",
+    "H2": "CENTRO DE SALUD",
+    "H3": "HOSPITAL GENERAL",
+
+    "OU": "OTROS USOS",
+
+    "ZHR": "ZONA DE HABILITACION RECREACIONAL",
+    "ZRP": "ZONA DE RECREACION PUBLICA",
+    "ZRE": "ZONA DE REGLAMENTACION ESPECIAL",
+    "AUR": "AREA URBANIZABLE DE RESERVA",
+
+    "ZA": "ZONA RURAL AGRICOLA",
+    "ZTP": "ZONA DE TRATAMIENTO PAISAJISTA",
+
+    "ZPE": "ZONA DE PROTECCION ECOLOGICA",
+    "ZPA": "ZONA DE PROTECCION ARQUEOLOGICA",
+    "ZPR": "ZONA DE PROTECCION POR RIESGOS"
+};
+
+
+/* ==========================================================
+   6. FUNCIONES AUXILIARES
+========================================================== */
+
+function escaparHTML(valor) {
+    if (valor === null || valor === undefined) {
+        return "";
+    }
+
+    return String(valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function valorPropiedad(p, ...nombres) {
+    for (const nombre of nombres) {
+        if (p[nombre] !== undefined && p[nombre] !== null) {
+            return p[nombre];
+        }
+    }
+    return "—";
+}
+
+
+/* ==========================================================
+   7. CAPAS
+========================================================== */
+
+let zonificacionLayer = null;
+let ambitoIntervencionLayer = null;
+
+/*
+   Grupo vial:
+   - vialVisible: línea cartográfica
+   - vialHitArea: línea invisible ancha para facilitar clic
+*/
+let vialVisible = null;
+let vialHitArea = null;
+let sistemaVialLayer = null;
+
+
+/* ==========================================================
+   8. ESTILO ZONIFICACIÓN
+========================================================== */
+
+function estiloZonificacion(feature) {
+
+    const p = feature.properties || {};
+
+    const codigo = String(
+        valorPropiedad(p, "simb_zoni", "SIMB_ZONI")
+    ).trim().toUpperCase();
+
+    const color =
+        coloresZonificacion[codigo] || "#FFFFFF";
+
+    return {
+        color: "#555555",
+        weight: 0.7,
+        opacity: 0.85,
+        fillColor: color,
+        fillOpacity: 0.72
+    };
+}
+
+
+/* ==========================================================
+   9. POPUP ZONIFICACIÓN
+========================================================== */
+
+function popupZonificacion(feature, layer) {
+
+    const p = feature.properties || {};
+
+    const codigo =
+        valorPropiedad(p, "simb_zoni", "SIMB_ZONI");
+
+    const zona =
+        valorPropiedad(
+            p,
+            "SCLAS_ZONI",
+            "sclas_zoni",
+            "DESC_ZONI",
+            "desc_zoni",
+            "nom_zoni"
+        );
+
+    layer.bindPopup(`
+        <div class="popup-ficha-pdm">
+            <div class="ficha-cabecera">
+                <div class="ficha-titulo">ZONIFICACIÓN URBANA</div>
+                <div class="ficha-subtitulo">Consulta territorial</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Código</div>
+                <div class="ficha-valor">${escaparHTML(codigo)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Zona</div>
+                <div class="ficha-valor">${escaparHTML(zona)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Norma</div>
+                <div class="ficha-valor">O.M. N.° 018-2025-MPCH/A</div>
+            </div>
+
+            <div class="ficha-pie">
+                PDM Chiclayo – Lambayeque 2022–2042
+            </div>
+        </div>
+    `, { maxWidth: 340, minWidth: 280, className: "popup-pdm-institucional" });
+}
+
+
+/* ==========================================================
+   10. ESTILO SISTEMA VIAL
+========================================================== */
+
+function estiloSistemaVial(feature) {
+
+    const p = feature.properties || {};
+
+    const tipo = String(
+        valorPropiedad(
+            p,
+            "M_VIA_PROP",
+            "m_via_prop"
+        )
+    ).trim().toUpperCase();
+
+
+    if (tipo === "VIA COLECTORA") {
+        return {
+            color: "#E07A5F",
+            weight: 3,
+            opacity: 0.95
+        };
+    }
+
+
+    if (tipo === "VIA ARTERIAL") {
+        return {
+            color: "#2E8B57",
+            weight: 4,
+            opacity: 0.95
+        };
+    }
+
+
+    if (
+        tipo === "VIA ARTERIAL_EXTERNA" ||
+        tipo === "VIA ARTERIAL EXTERNA"
+    ) {
+        return {
+            color: "#2E8B57",
+            weight: 3,
+            opacity: 0.95,
+            dashArray: "7,7"
+        };
+    }
+
+
+    if (tipo === "VIA EXPRESA REGIONAL") {
+        return {
+            color: "#5B0A0A",
+            weight: 5,
+            opacity: 0.95
+        };
+    }
+
+
+    if (
+        tipo === "VIA EXPRESA REGIONAL_EXTERNA" ||
+        tipo === "VIA EXPRESA REGIONAL EXTERNA"
+    ) {
+        return {
+            color: "#5B0A0A",
+            weight: 4,
+            opacity: 0.95,
+            dashArray: "8,8"
+        };
+    }
+
+
+    if (tipo === "VIA EXPRESA NACIONAL") {
+        return {
+            color: "#E60000",
+            weight: 5,
+            opacity: 0.95
+        };
+    }
+
+
+    if (
+        tipo === "VIA EXPRESA NACIONAL_EXTERNA" ||
+        tipo === "VIA EXPRESA NACIONAL EXTERNA"
+    ) {
+        return {
+            color: "#E60000",
+            weight: 4,
+            opacity: 0.95,
+            dashArray: "8,8"
+        };
+    }
+
+
+    return {
+        color: "#555555",
+        weight: 2,
+        opacity: 0.9
+    };
+}
+
+
+/* ==========================================================
+   11. POPUP SISTEMA VIAL
+========================================================== */
+
+function popupSistemaVial(feature, layer) {
+
+    const p = feature.properties || {};
+
+    const nombre =
+        valorPropiedad(
+            p,
+            "NOM_VIA",
+            "nom_via"
+        );
+
+    const tipo =
+        valorPropiedad(
+            p,
+            "M_VIA_PROP",
+            "m_via_prop"
+        );
+
+    const seccion =
+        valorPropiedad(
+            p,
+            "M_SEC_PROP",
+            "m_sec_prop"
+        );
+
+    const ciclovia =
+        valorPropiedad(
+            p,
+            "CICLOVIA",
+            "ciclovia"
+        );
+
+
+    layer.bindPopup(`
+        <div class="popup-ficha-pdm">
+            <div class="ficha-cabecera">
+                <div class="ficha-titulo">SISTEMA VIAL METROPOLITANO</div>
+                <div class="ficha-subtitulo">Consulta territorial</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Nombre de vía</div>
+                <div class="ficha-valor">${escaparHTML(nombre)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Tipo de vía</div>
+                <div class="ficha-valor">${escaparHTML(tipo)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Sección</div>
+                <div class="ficha-valor">${escaparHTML(seccion)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Ciclovía</div>
+                <div class="ficha-valor">${escaparHTML(ciclovia)}</div>
+            </div>
+
+            <div class="ficha-pie">
+                PDM Chiclayo – Lambayeque 2022–2042
+            </div>
+        </div>
+    `, { maxWidth: 340, minWidth: 280, className: "popup-pdm-institucional" });
+}
+
+
+/* ==========================================================
+   12. CAPAS BASE
+========================================================== */
+
+const baseMaps = {
+    "OpenStreetMap": osm,
+    "Imagen satelital": satelite
+};
+
+
+/* ==========================================================
+   13. CONTROL DE CAPAS
+========================================================== */
+
+// Las capas temáticas se controlan exclusivamente desde la leyenda PDM.
+// El control superior queda reservado únicamente para el mapa base.
+const overlayMaps = {};
+
+const controlCapas = L.control.layers(
+    baseMaps,
+    {},
+    {
+        collapsed: false
+    }
+).addTo(map);
+
+
+/* ==========================================================
+   14. ESCALA
+========================================================== */
+
+L.control.scale({
+    imperial: false,
+    metric: true,
+    position: "bottomleft"
+}).addTo(map);
+
+
+/* ==========================================================
+   15. LEYENDA ZONIFICACIÓN
+========================================================== */
+
+function crearLeyendaZonificacion(data) {
+
+    const categorias = new Set();
+
+    data.features.forEach(function(feature) {
+
+        const p = feature.properties || {};
+
+        const codigo = String(
+            valorPropiedad(
+                p,
+                "simb_zoni",
+                "SIMB_ZONI"
+            )
+        ).trim().toUpperCase();
+
+        if (coloresZonificacion[codigo]) {
+            categorias.add(codigo);
+        }
+    });
+
+
+    const control =
+        L.control({
+            position: "bottomright"
+        });
+
+
+    control.onAdd = function() {
+
+        const div =
+            L.DomUtil.create(
+                "div",
+                "legend-box"
+            );
+
+
+        div.innerHTML = `
+            <h4>ZONIFICACIÓN</h4>
+        `;
+
+
+        const orden = [
+            "RDA", "RDM", "RDB",
+            "CV", "CZ", "CM", "CE",
+            "I3", "I2", "I1",
+            "E1", "E2", "E3",
+            "H1", "H2", "H3",
+            "OU",
+            "ZHR", "ZRP", "ZRE",
+            "AUR", "ZA", "ZTP",
+            "ZPE", "ZPA", "ZPR"
+        ];
+
+
+        orden.forEach(function(codigo) {
+
+            if (!categorias.has(codigo)) {
+                return;
+            }
+
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "legend-item";
+
+
+            item.innerHTML = `
+                <span
+                    class="legend-polygon"
+                    style="
+                        background:${coloresZonificacion[codigo]};
+                    "
+                ></span>
+
+                <span>
+                    ${nombresZonificacion[codigo]}
+                </span>
+            `;
+
+
+            div.appendChild(item);
+        });
+
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+
+
+        return div;
+    };
+
+
+    control.addTo(map);
+}
+
+
+/* ==========================================================
+   16. LEYENDA SISTEMA VIAL
+========================================================== */
+
+let habilitacionesUrbanasLayer = null;
+let sectoresCatastralesLayer = null;
+
+let leyendaSistemaVial = null;
+
+function crearLeyendaSistemaVial() {
+
+    if (leyendaSistemaVial) {
+        return;
+    }
+
+    leyendaSistemaVial = L.control({
+        position: "bottomleft"
+    });
+
+    leyendaSistemaVial.onAdd = function() {
+
+        const div = L.DomUtil.create(
+            "div",
+            "legend-box"
+        );
+
+        div.innerHTML = `
+            <h4>SISTEMA VIAL PROPUESTO</h4>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:3px solid #E07A5F;"></span>
+                <span>VÍA COLECTORA</span>
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:4px solid #2E8B57;"></span>
+                <span>VÍA ARTERIAL</span>
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:3px dashed #2E8B57;"></span>
+                <span>VÍA ARTERIAL EXTERNA</span>
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:5px solid #5B0A0A;"></span>
+                <span>VÍA EXPRESA REGIONAL</span>
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:4px dashed #5B0A0A;"></span>
+                <span>VÍA EXPRESA REGIONAL EXTERNA</span>
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:5px solid #E60000;"></span>
+                <span>VÍA EXPRESA NACIONAL</span>
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-line"
+                      style="border-top:4px dashed #E60000;"></span>
+                <span>VÍA EXPRESA NACIONAL EXTERNA</span>
+            </div>
+        `;
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+
+        return div;
+    };
+
+    leyendaSistemaVial.addTo(map);
+}
+
+
+function quitarLeyendaSistemaVial() {
+
+    if (leyendaSistemaVial) {
+
+        map.removeControl(
+            leyendaSistemaVial
+        );
+
+        leyendaSistemaVial = null;
+    }
+}
+
+
+/* ==========================================================
+   LEYENDA VIAL DINÁMICA
+========================================================== */
+
+map.on("overlayadd", function(event) {
+
+    if (event.name === "Sistema Vial Metropolitano") {
+        actualizarLeyendaTematica();
+    }
+
+});
+
+
+map.on("overlayremove", function(event) {
+
+    if (event.name === "Sistema Vial Metropolitano") {
+        quitarLeyendaSistemaVial();
+    }
+
+    actualizarLeyendaTematica();
+
+});
+
+
+
+
+/* ==========================================================
+   ÁMBITO DE INTERVENCIÓN
+========================================================== */
+
+function estiloAmbitoIntervencion() {
+    return {
+        color: "#1F4E79",
+        weight: 3,
+        opacity: 0.95,
+        fillColor: "#5B9BD5",
+        fillOpacity: 0.12
+    };
+}
+function popupAmbitoIntervencion(feature, layer) {
+
+    const p = feature.properties || {};
+
+    const codigo = valorPropiedad(p, "COD_AL", "cod_al");
+    const nombre = valorPropiedad(p, "NOM_AL", "nom_al");
+    const area = valorPropiedad(p, "AREA_HAS", "area_has");
+
+    let areaTexto = "—";
+    if (area !== "—" && area !== "") {
+        const numeroArea = Number(String(area).replace(/,/g, ""));
+        areaTexto = Number.isFinite(numeroArea)
+            ? `${numeroArea.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ha`
+            : `${escaparHTML(area)} ha`;
+    }
+
+    layer.bindPopup(`
+        <div class="popup-ficha-pdm">
+
+            <div class="ficha-cabecera">
+                <div class="ficha-titulo">
+                    ÁMBITO DE INTERVENCIÓN
+                </div>
+                <div class="ficha-subtitulo">
+                    Consulta territorial
+                </div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Código</div>
+                <div class="ficha-valor">
+                    ${escaparHTML(codigo)}
+                </div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Nombre</div>
+                <div class="ficha-valor">
+                    ${escaparHTML(nombre)}
+                </div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Área</div>
+                <div class="ficha-valor">
+                    ${areaTexto}
+                </div>
+            </div>
+
+            <div class="ficha-pie">
+                PDM Chiclayo – Lambayeque 2022–2042
+            </div>
+
+        </div>
+    `, {
+        maxWidth: 340,
+        minWidth: 280,
+        className: "popup-pdm-institucional"
+    });
+}
+function cargarAmbitoIntervencion() {
+
+    fetch(rutaAmbito)
+        .then(function(response) {
+
+            if (!response.ok) {
+                throw new Error(
+                    "HTTP " + response.status +
+                    " - No se pudo cargar el Ámbito de Intervención."
+                );
+            }
+
+            return response.json();
+        })
+        .then(function(data) {
+
+            console.log(
+                "Ámbito de Intervención:",
+                data.features.length,
+                "objetos"
+            );
+
+            ambitoIntervencionLayer = L.geoJSON(
+                data,
+                {
+                    style: estiloAmbitoIntervencion,
+
+                    onEachFeature: function(feature, layer) {
+
+                        popupAmbitoIntervencion(feature, layer);
+
+                        layer.on({
+
+                            mouseover: function(e) {
+                                e.target.setStyle({
+                                    weight: 4,
+                                    fillOpacity: 0.20
+                                });
+                            },
+
+                            mouseout: function(e) {
+                                ambitoIntervencionLayer.resetStyle(e.target);
+                            }
+                        });
+                    }
+                }
+            );
+
+            window.ambitoIntervencion =
+                ambitoIntervencionLayer;
+
+            actualizarLeyendaTematica();
+
+        })
+        .catch(function(error) {
+
+            console.error(
+                "ERROR ÁMBITO DE INTERVENCIÓN:",
+                error
+            );
+
+        });
+}
+
+
+map.on("overlayadd", function(event) {
+    if (event.name === "Ámbito de Intervención") {
+        actualizarLeyendaTematica();
+    }
+});
+
+map.on("overlayremove", function(event) {
+    if (event.name === "Ámbito de Intervención") {
+        actualizarLeyendaTematica();
+    }
+});
+
+
+/* ==========================================================
+   HABILITACIONES URBANAS
+   Popup simplificado:
+   Nombre + Código + Tipo + Estado
+========================================================== */
+
+function estiloHabilitacionesUrbanas() {
+    return {
+        color: "#222222",
+        weight: 1.8,
+        opacity: 0.95,
+        fillColor: "#FFFFFF",
+        fillOpacity: 0.12
+    };
+}
+
+
+function popupHabilitacion(feature, layer) {
+
+    const p = feature.properties || {};
+
+    const nombre = p.NOMB_HAB_U ?? "";
+    const codigo = p.COD_HAB_UR ?? "";
+    const tipo   = p.TIPO_HAB_U ?? "";
+    const estado = p.ESTADO ?? "";
+
+    layer.bindPopup(`
+        <div class="popup-ficha-pdm">
+            <div class="ficha-cabecera">
+                <div class="ficha-titulo">HABILITACIÓN URBANA</div>
+                <div class="ficha-subtitulo">Consulta catastral</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Nombre</div>
+                <div class="ficha-valor">${escaparHTML(nombre)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Código</div>
+                <div class="ficha-valor">${escaparHTML(codigo)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Tipo</div>
+                <div class="ficha-valor">${escaparHTML(tipo)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Estado</div>
+                <div class="ficha-valor">${escaparHTML(estado)}</div>
+            </div>
+
+            <div class="ficha-pie">
+                Catastro – Habilitaciones Urbanas
+            </div>
+        </div>
+    `, { maxWidth: 340, minWidth: 280, className: "popup-pdm-institucional" });
+}
+
+
+function cargarHabilitacionesUrbanas() {
+
+    fetch(
+        "../GEOJSON/MAESTROS/habilitaciones_urbanas.geojson"
+    )
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error(
+                "HTTP " + response.status
+            );
+        }
+
+        return response.json();
+    })
+    .then(data => {
+
+        habilitacionesUrbanasLayer =
+            L.geoJSON(
+                data,
+                {
+                    style: estiloHabilitacionesUrbanas,
+
+                    onEachFeature: function(feature, layer) {
+
+                        popupHabilitacion(feature, layer);
+
+                        layer.on({
+                            mouseover: function(e) {
+                                e.target.setStyle({
+                                    color: "#000000",
+                                    weight: 3,
+                                    opacity: 1,
+                                    fillOpacity: 0.22
+                                });
+                            },
+
+                            mouseout: function(e) {
+                                habilitacionesUrbanasLayer.resetStyle(e.target);
+                            }
+                        });
+                    }
+                }
+            );
+window.habilitacionesUrbanas =
+            habilitacionesUrbanasLayer;
+
+        // Actualizar el buscador cuando la capa ya está cargada.
+        if (typeof prepararIndiceBuscador === "function") {
+            prepararIndiceBuscador();
+        }
+
+        map.on(
+            "overlayadd",
+            function(event) {
+
+                if (
+                    event.name ===
+                    "Habilitaciones Urbanas"
+                ) {
+                    actualizarLeyendaTematica();
+                }
+            }
+        );
+
+        map.on(
+            "overlayremove",
+            function(event) {
+
+                if (
+                    event.name ===
+                    "Habilitaciones Urbanas"
+                ) {
+                    actualizarLeyendaTematica();
+                }
+            }
+        );
+    })
+    .catch(error => {
+
+        console.error(
+            "Error cargando Habilitaciones Urbanas:",
+            error
+        );
+    });
+}
+
+
+
+
+/* ==========================================================
+   SECTORES CATASTRALES
+========================================================== */
+
+function estiloSectoresCatastrales() {
+    return {
+        color: "#5B2C83",
+        weight: 2,
+        opacity: 0.95,
+        fillColor: "#9B59B6",
+        fillOpacity: 0.08
+    };
+}
+
+function popupSectorCatastral(feature, layer) {
+
+    const p = feature.properties || {};
+
+    const idUbi = p.ID_UBI_GEO ?? "";
+    const codSector = p.COD_SECTOR ?? "";
+    const idSector = p.ID_SECTOR ?? "";
+
+    layer.bindPopup(`
+        <div class="popup-ficha-pdm">
+            <div class="ficha-cabecera">
+                <div class="ficha-titulo">SECTOR CATASTRAL</div>
+                <div class="ficha-subtitulo">Consulta catastral</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">ID ubicación geográfica</div>
+                <div class="ficha-valor">${escaparHTML(idUbi)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">Código de sector</div>
+                <div class="ficha-valor">${escaparHTML(codSector)}</div>
+            </div>
+
+            <div class="ficha-dato">
+                <div class="ficha-label">ID sector</div>
+                <div class="ficha-valor">${escaparHTML(idSector)}</div>
+            </div>
+
+            <div class="ficha-pie">
+                Catastro – Sectores Catastrales
+            </div>
+        </div>
+    `, { maxWidth: 340, minWidth: 280, className: "popup-pdm-institucional" });
+}
+
+function cargarSectoresCatastrales() {
+
+    fetch("../GEOJSON/WEB/P_140101_Sectores_Catastrales_WEB.geojson")
+    .then(function(response) {
+
+        if (!response.ok) {
+            throw new Error(
+                "HTTP " + response.status +
+                " - No se pudo cargar Sectores Catastrales."
+            );
+        }
+
+        return response.json();
+    })
+    .then(function(data) {
+
+        console.log(
+            "Sectores Catastrales:",
+            data.features.length,
+            "objetos"
+        );
+
+        sectoresCatastralesLayer =
+            L.geoJSON(
+                data,
+                {
+                    style: estiloSectoresCatastrales,
+
+                    onEachFeature: function(feature, layer) {
+
+                        popupSectorCatastral(feature, layer);
+
+                        layer.on({
+
+                            mouseover: function(e) {
+
+                                e.target.setStyle({
+                                    color: "#3A1B52",
+                                    weight: 3,
+                                    opacity: 1,
+                                    fillOpacity: 0.16
+                                });
+                            },
+
+                            mouseout: function(e) {
+
+                                sectoresCatastralesLayer
+                                    .resetStyle(e.target);
+                            }
+
+                        });
+                    }
+                }
+            );
+
+        window.sectoresCatastrales =
+            sectoresCatastralesLayer;
+
+        actualizarLeyendaTematica();
+
+    })
+    .catch(function(error) {
+
+        console.error(
+            "ERROR SECTORES CATASTRALES:",
+            error
+        );
+
+    });
+}
+
+/* ==========================================================
+   LEYENDA TEMÁTICA PRINCIPAL
+   PDM CHICLAYO – LAMBAYEQUE
+   ├─ ÁMBITO DE INTERVENCIÓN
+   ├─ ZONIFICACIÓN URBANA
+   ├─ SISTEMA VIAL METROPOLITANO
+   └─ CATASTRO
+      ├─ HABILITACIONES URBANAS
+      └─ SECTORES CATASTRALES
+========================================================== */
+
+let leyendaTematica = null;
+
+function crearLeyendaTematica() {
+
+    if (leyendaTematica) {
+        return;
+    }
+
+    leyendaTematica = L.control({
+        position: "bottomright"
+    });
+
+    leyendaTematica.onAdd = function() {
+
+        const div = L.DomUtil.create(
+            "div",
+            "legend-pdm"
+        );
+
+        div.id = "leyendaPDM";
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+
+        return div;
+    };
+
+    leyendaTematica.addTo(map);
+
+    actualizarLeyendaTematica();
+}
+
+let estadoLeyendaSecciones = {
+    ambito: true,
+    zonificacion: true,
+    vial: true,
+    catastro: true,
+    habilitaciones: true,
+    sectores: true
+};
+
+function estadoCapa(nombre) {
+
+    if (nombre === "Ámbito de Intervención") {
+        return !!(
+            window.ambitoIntervencion &&
+            map.hasLayer(window.ambitoIntervencion)
+        );
+    }
+
+    if (nombre === "Zonificación") {
+        return !!(
+            window.zonificacion &&
+            map.hasLayer(window.zonificacion)
+        );
+    }
+
+    if (nombre === "Sistema Vial Metropolitano") {
+        return !!(
+            window.sistemaVial &&
+            map.hasLayer(window.sistemaVial)
+        );
+    }
+
+    if (nombre === "Habilitaciones Urbanas") {
+        return !!(
+            window.habilitacionesUrbanas &&
+            map.hasLayer(window.habilitacionesUrbanas)
+        );
+    }
+
+    if (nombre === "Sectores Catastrales") {
+        return !!(
+            window.sectoresCatastrales &&
+            map.hasLayer(window.sectoresCatastrales)
+        );
+    }
+
+    return false;
+}
+
+function traerCapaAlFrente(capa) {
+    if (!capa || !capa.eachLayer) return;
+    capa.eachLayer(function(subcapa) {
+        if (subcapa && subcapa.bringToFront) {
+            subcapa.bringToFront();
+        }
+    });
+}
+
+function cambiarCapaDesdeLeyenda(nombre, checked) {
+
+    let capa = null;
+
+    if (nombre === "Ámbito de Intervención") {
+        capa = window.ambitoIntervencion;
+    } else if (nombre === "Zonificación") {
+        capa = window.zonificacion;
+    } else if (nombre === "Sistema Vial Metropolitano") {
+        capa = window.sistemaVial;
+    } else if (nombre === "Habilitaciones Urbanas") {
+        capa = window.habilitacionesUrbanas;
+    } else if (nombre === "Sectores Catastrales") {
+        capa = window.sectoresCatastrales;
+    }
+
+    if (!capa) {
+        return;
+    }
+
+    if (checked) {
+        map.addLayer(capa);
+        // La última capa activada queda arriba para que sus atributos
+        // sean seleccionables cuando exista superposición con otras capas.
+        traerCapaAlFrente(capa);
+    } else {
+        map.removeLayer(capa);
+    }
+
+    actualizarLeyendaTematica();
+}
+
+function alternarSeccionLeyenda(seccion) {
+
+    estadoLeyendaSecciones[seccion] =
+        !estadoLeyendaSecciones[seccion];
+
+    actualizarLeyendaTematica();
+}
+
+function detenerEventoLeyenda(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+}
+
+
+function capaPorNombreTransparencia(nombre) {
+    if (nombre === "Ámbito de Intervención") return ambitoIntervencionLayer;
+    if (nombre === "Zonificación") return zonificacionLayer;
+    if (nombre === "Sistema Vial Metropolitano") return vialVisible;
+    if (nombre === "Habilitaciones Urbanas") return habilitacionesUrbanasLayer;
+    if (nombre === "Sectores Catastrales") return sectoresCatastralesLayer;
+    return null;
+}
+
+function aplicarTransparenciaLeyenda(nombre, porcentaje) {
+    const capa = capaPorNombreTransparencia(nombre);
+    if (!capa) return;
+
+    const valor = Number(porcentaje) / 100;
+
+    if (capa.eachLayer) {
+        capa.eachLayer(function(subcapa) {
+            if (subcapa.setStyle) {
+                subcapa.setStyle({
+                    opacity: Math.max(valor, 0.05),
+                    fillOpacity: valor
+                });
+            }
+        });
+    } else if (capa.setStyle) {
+        capa.setStyle({
+            opacity: Math.max(valor, 0.05),
+            fillOpacity: valor
+        });
+    }
+
+    // La capa de hit-area vial debe conservar su comportamiento de selección.
+    if (nombre === "Sistema Vial Metropolitano" && vialHitArea) {
+        if (map.hasLayer(vialHitArea)) {
+            vialHitArea.eachLayer(function(subcapa) {
+                if (subcapa.setStyle) {
+                    subcapa.setStyle({
+                        opacity: 0.001,
+                        fillOpacity: 0
+                    });
+                }
+            });
+        }
+    }
+}
+
+function htmlTransparencia(nombre, id) {
+    const opacidadGuardada =
+        (window.opacidadesPDM && window.opacidadesPDM[nombre] !== undefined)
+        ? window.opacidadesPDM[nombre]
+        : 100;
+
+    return `
+        <span class="pdm-opacity-wrap"
+              title="Transparencia de ${nombre}"
+              onclick="detenerEventoLeyenda(event)">
+            <input
+                id="${id}"
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value="${opacidadGuardada}"
+                onclick="detenerEventoLeyenda(event)"
+                oninput="cambiarTransparenciaLeyenda('${nombre}', this.value)"
+            >
+            <span id="${id}-valor" class="pdm-opacity-value">
+                ${opacidadGuardada}%
+            </span>
+        </span>
+    `;
+}
+
+window.opacidadesPDM = window.opacidadesPDM || {};
+
+function cambiarTransparenciaLeyenda(nombre, valor) {
+    window.opacidadesPDM[nombre] = Number(valor);
+    aplicarTransparenciaLeyenda(nombre, valor);
+
+    const idMap = {
+        "Ámbito de Intervención": "sliderAmbitoPDM",
+        "Zonificación": "sliderZonificacionPDM",
+        "Sistema Vial Metropolitano": "sliderVialPDM",
+        "Habilitaciones Urbanas": "sliderHabilitacionesPDM",
+        "Sectores Catastrales": "sliderSectoresPDM"
+    };
+
+    const id = idMap[nombre];
+    const etiqueta = document.getElementById(id + "-valor");
+    if (etiqueta) etiqueta.textContent = Number(valor) + "%";
+}
+
+function ajustarTamanoLeyendaPDM() {
+    const panel = document.getElementById("leyendaPDM");
+    if (!panel) return;
+
+    // Tamaño fijo: al activar/desactivar o plegar/desplegar capas,
+    // solo cambia el contenido interno. El panel conserva siempre
+    // la misma altura y anchura.
+    panel.style.width = "340px";
+    panel.style.minWidth = "340px";
+    panel.style.maxWidth = "340px";
+    panel.style.height = "520px";
+    panel.style.minHeight = "520px";
+    panel.style.maxHeight = "520px";
+    panel.style.overflowY = "auto";
+    panel.style.overflowX = "hidden";
+}
+
+function actualizarLeyendaTematica() {
+
+    if (!leyendaTematica) {
+        return;
+    }
+
+    const div = document.getElementById("leyendaPDM");
+
+    if (!div) {
+        return;
+    }
+
+    let contenido = `
+        <div class="legend-pdm-title"
+             onclick="toggleLeyendaPDM()"
+             title="Mostrar / ocultar toda la leyenda">
+            <span>PDM CHICLAYO – LAMBAYEQUE</span>
+            <span id="flechaLeyendaPDM"
+                  class="legend-pdm-arrow">
+                ${estadoLeyendaPDM ? "▼" : "▶"}
+            </span>
+        </div>
+
+        <div id="contenidoLeyendaPDM"
+             style="display:${estadoLeyendaPDM ? "block" : "none"};">
+    `;
+
+    /* ======================================================
+       ÁMBITO DE INTERVENCIÓN
+    ====================================================== */
+
+    contenido += `
+        <div class="legend-pdm-section"
+             onclick="alternarSeccionLeyenda('ambito')">
+            <span class="legend-arrow">
+                ${estadoLeyendaSecciones.ambito ? "▼" : "▶"}
+            </span>
+
+            <input
+                class="legend-check"
+                type="checkbox"
+                ${estadoCapa("Ámbito de Intervención") ? "checked" : ""}
+                onclick="detenerEventoLeyenda(event); cambiarCapaDesdeLeyenda('Ámbito de Intervención', this.checked)"
+            >
+
+            <span>ÁMBITO DE INTERVENCIÓN</span>
+            ${estadoCapa("Ámbito de Intervención") ? htmlTransparencia("Ámbito de Intervención", "sliderAmbitoPDM") : ""}
+        </div>
+    `;
+
+    if (estadoLeyendaSecciones.ambito) {
+
+        if (estadoCapa("Ámbito de Intervención")) {
+
+            contenido += `
+                <div class="legend-pdm-item">
+                    <span
+                        class="legend-polygon"
+                        style="
+                            background:#5B9BD5;
+                            border:3px solid #1F4E79;
+                            opacity:0.95;
+                        "
+                    ></span>
+                    <span>Ámbito de intervención</span>
+                </div>
+            `;
+
+        } else {
+
+            contenido += `
+                <div class="legend-pdm-empty">
+                    Capa no activa
+                </div>
+            `;
+        }
+    }
+
+    /* ======================================================
+       ZONIFICACIÓN URBANA
+    ====================================================== */
+
+    contenido += `
+        <div class="legend-pdm-section"
+             onclick="alternarSeccionLeyenda('zonificacion')">
+            <span class="legend-arrow">
+                ${estadoLeyendaSecciones.zonificacion ? "▼" : "▶"}
+            </span>
+
+            <input
+                class="legend-check"
+                type="checkbox"
+                ${estadoCapa("Zonificación") ? "checked" : ""}
+                onclick="detenerEventoLeyenda(event); cambiarCapaDesdeLeyenda('Zonificación', this.checked)"
+            >
+
+            <span>ZONIFICACIÓN URBANA</span>
+            ${estadoCapa("Zonificación") ? htmlTransparencia("Zonificación", "sliderZonificacionPDM") : ""}
+        </div>
+    `;
+
+    if (estadoLeyendaSecciones.zonificacion) {
+
+        if (estadoCapa("Zonificación")) {
+
+            const categorias = new Set();
+
+            if (window.datosZonificacion) {
+
+                window.datosZonificacion.features.forEach(function(feature) {
+
+                    const p = feature.properties || {};
+
+                    const codigo = String(
+                        valorPropiedad(
+                            p,
+                            "simb_zoni",
+                            "SIMB_ZONI"
+                        )
+                    ).trim().toUpperCase();
+
+                    if (coloresZonificacion[codigo]) {
+                        categorias.add(codigo);
+                    }
+                });
+            }
+
+            const orden = [
+                "RDA", "RDM", "RDB",
+                "CV", "CZ", "CM", "CE",
+                "I3", "I2", "I1",
+                "E1", "E2", "E3",
+                "H1", "H2", "H3",
+                "OU",
+                "ZHR", "ZRP", "ZRE",
+                "AUR", "ZA", "ZTP",
+                "ZPE", "ZPA", "ZPR"
+            ];
+
+            orden.forEach(function(codigo) {
+
+                if (!categorias.has(codigo)) {
+                    return;
+                }
+
+                contenido += `
+                    <div class="legend-pdm-item">
+                        <span
+                            class="legend-polygon"
+                            style="
+                                background:${coloresZonificacion[codigo]};
+                                border:1px solid #777;
+                            "
+                        ></span>
+                        <span>
+                            ${nombresZonificacion[codigo]}
+                        </span>
+                    </div>
+                `;
+            });
+
+        } else {
+
+            contenido += `
+                <div class="legend-pdm-empty">
+                    Capa no activa
+                </div>
+            `;
+        }
+    }
+
+    /* ======================================================
+       SISTEMA VIAL METROPOLITANO
+    ====================================================== */
+
+    contenido += `
+        <div class="legend-pdm-section"
+             onclick="alternarSeccionLeyenda('vial')">
+            <span class="legend-arrow">
+                ${estadoLeyendaSecciones.vial ? "▼" : "▶"}
+            </span>
+
+            <input
+                class="legend-check"
+                type="checkbox"
+                ${estadoCapa("Sistema Vial Metropolitano") ? "checked" : ""}
+                onclick="detenerEventoLeyenda(event); cambiarCapaDesdeLeyenda('Sistema Vial Metropolitano', this.checked)"
+            >
+
+            <span>SISTEMA VIAL METROPOLITANO</span>
+            ${estadoCapa("Sistema Vial Metropolitano") ? htmlTransparencia("Sistema Vial Metropolitano", "sliderVialPDM") : ""}
+        </div>
+    `;
+
+    if (estadoLeyendaSecciones.vial) {
+
+        if (estadoCapa("Sistema Vial Metropolitano")) {
+
+            const vialItems = [
+                ["#E07A5F", "3px solid", "VÍA COLECTORA"],
+                ["#2E8B57", "4px solid", "VÍA ARTERIAL"],
+                ["#2E8B57", "3px dashed", "VÍA ARTERIAL EXTERNA"],
+                ["#5B0A0A", "5px solid", "VÍA EXPRESA REGIONAL"],
+                ["#5B0A0A", "4px dashed", "VÍA EXPRESA REGIONAL EXTERNA"],
+                ["#E60000", "5px solid", "VÍA EXPRESA NACIONAL"],
+                ["#E60000", "4px dashed", "VÍA EXPRESA NACIONAL EXTERNA"]
+            ];
+
+            vialItems.forEach(function(item) {
+
+                contenido += `
+                    <div class="legend-pdm-item">
+                        <span
+                            class="legend-line"
+                            style="border-top:${item[1]} ${item[0]};"
+                        ></span>
+                        <span>${item[2]}</span>
+                    </div>
+                `;
+            });
+
+        } else {
+
+            contenido += `
+                <div class="legend-pdm-empty">
+                    Capa no activa
+                </div>
+            `;
+        }
+    }
+
+    /* ======================================================
+       CATASTRO
+    ====================================================== */
+
+    contenido += `
+        <div class="legend-pdm-section"
+             onclick="alternarSeccionLeyenda('catastro')">
+            <span class="legend-arrow">
+                ${estadoLeyendaSecciones.catastro ? "▼" : "▶"}
+            </span>
+            <span>CATASTRO</span>
+        </div>
+    `;
+
+    if (estadoLeyendaSecciones.catastro) {
+
+        contenido += `
+            <div class="legend-pdm-subsection"
+                 onclick="alternarSeccionLeyenda('habilitaciones')">
+                <span class="legend-arrow">
+                    ${estadoLeyendaSecciones.habilitaciones ? "▼" : "▶"}
+                </span>
+
+                <input
+                    class="legend-check"
+                    type="checkbox"
+                    ${estadoCapa("Habilitaciones Urbanas") ? "checked" : ""}
+                    onclick="detenerEventoLeyenda(event); cambiarCapaDesdeLeyenda('Habilitaciones Urbanas', this.checked)"
+                >
+
+                <span>HABILITACIONES URBANAS</span>
+            </div>
+
+            <div class="legend-pdm-subsection"
+                 onclick="alternarSeccionLeyenda('sectores')">
+                <span class="legend-arrow">
+                    ${estadoLeyendaSecciones.sectores ? "▼" : "▶"}
+                </span>
+
+                <input
+                    class="legend-check"
+                    type="checkbox"
+                    ${estadoCapa("Sectores Catastrales") ? "checked" : ""}
+                    onclick="detenerEventoLeyenda(event); cambiarCapaDesdeLeyenda('Sectores Catastrales', this.checked)"
+                >
+
+                <span>SECTORES CATASTRALES</span>
+                ${estadoCapa("Sectores Catastrales") ? htmlTransparencia("Sectores Catastrales", "sliderSectoresPDM") : ""}
+            </div>
+        `;
+        /* Habilitaciones Urbanas se controla únicamente desde
+           el checkbox del subtítulo CATASTRO. No se agrega una
+           segunda fila de leyenda debajo. */
+    }
+
+    contenido += `
+        </div>
+    `;
+
+    div.innerHTML = contenido;
+
+    // La leyenda se redimensiona automáticamente según
+    // las secciones que estén desplegadas.
+    requestAnimationFrame(function() {
+        ajustarTamanoLeyendaPDM();
+    });
+}
+
+
+/* ==========================================================
+   DESPLEGAR / OCULTAR LEYENDA PDM
+   El título permanece visible y el contenido se contrae.
+========================================================== */
+let estadoLeyendaPDM = true;
+
+function toggleLeyendaPDM() {
+
+    estadoLeyendaPDM = !estadoLeyendaPDM;
+
+    actualizarLeyendaTematica();
+}
+
+/* ==========================================================
+   17. CARGAR ZONIFICACIÓN
+========================================================== */
+
+fetch(rutaZonificacion)
+
+.then(function(response) {
+
+    if (!response.ok) {
+        throw new Error(
+            "HTTP " +
+            response.status +
+            " - No se pudo cargar la zonificación."
+        );
+    }
+
+    return response.json();
+})
+
+.then(function(data) {
+
+    console.log(
+        "Zonificación:",
+        data.features.length,
+        "objetos"
+    );
+
+
+    zonificacionLayer =
+        L.geoJSON(
+            data,
+            {
+                style:
+                    estiloZonificacion,
+
+                onEachFeature:
+                    function(feature, layer) {
+
+                        popupZonificacion(
+                            feature,
+                            layer
+                        );
+
+                        layer.on("click", function(e) {
+                            traerCapaAlFrente(zonificacionLayer);
+                        });
+
+                        layer.on({
+
+                            mouseover:
+                                function(e) {
+
+                                    e.target.setStyle({
+                                        weight: 2,
+                                        fillOpacity: 0.82
+                                    });
+                                },
+
+                            mouseout:
+                                function(e) {
+
+                                    zonificacionLayer
+                                        .resetStyle(
+                                            e.target
+                                        );
+                                }
+
+                        });
+                    }
+            }
+        );
+
+
+    zonificacionLayer.addTo(map);
+
+
+    actualizarLeyendaTematica();
+
+
+    window.zonificacion =
+        zonificacionLayer;
+
+    window.datosZonificacion =
+        data;
+
+    actualizarLeyendaTematica();
+
+})
+
+
+.catch(function(error) {
+
+    console.error(
+        "ERROR ZONIFICACIÓN:",
+        error
+    );
+
+});
+
+
+/* ==========================================================
+   18. CARGAR SISTEMA VIAL
+========================================================== */
+
+fetch(rutaVial)
+
+.then(function(response) {
+
+    if (!response.ok) {
+
+        throw new Error(
+            "HTTP " +
+            response.status +
+            " - No se pudo cargar el Sistema Vial."
+        );
+    }
+
+    return response.json();
+})
+
+.then(function(data) {
+
+    console.log(
+        "Sistema Vial:",
+        data.features.length,
+        "objetos"
+    );
+
+
+    /*
+       CAPA VISIBLE
+    */
+
+    vialVisible =
+        L.geoJSON(
+            data,
+            {
+                style:
+                    estiloSistemaVial,
+
+                onEachFeature:
+                    function(feature, layer) {
+
+                        popupSistemaVial(
+                            feature,
+                            layer
+                        );
+
+
+                        layer.on({
+
+                            mouseover:
+                                function(e) {
+
+                                    e.target.setStyle({
+                                        weight: 6,
+                                        opacity: 1
+                                    });
+                                },
+
+                            mouseout:
+                                function(e) {
+
+                                    vialVisible
+                                        .resetStyle(
+                                            e.target
+                                        );
+                                }
+
+                        });
+                    }
+            }
+        );
+
+
+    /*
+       CAPA INVISIBLE DE SELECCIÓN
+
+       Esta capa NO cambia la geometría.
+       Solo hace más fácil hacer clic
+       sobre las líneas.
+    */
+
+    vialHitArea =
+        L.geoJSON(
+            data,
+            {
+                style:
+                    function(feature) {
+
+                        return {
+
+                            color: "#000000",
+
+                            weight: 16,
+
+                            opacity: 0.001,
+
+                            fillOpacity: 0,
+
+                            interactive: true
+                        };
+                    },
+
+                onEachFeature:
+                    function(feature, layer) {
+
+                        popupSistemaVial(
+                            feature,
+                            layer
+                        );
+                    }
+            }
+        );
+
+
+    /*
+       GRUPO DEL SISTEMA VIAL
+
+       El usuario verá una sola capa
+       en el control.
+    */
+
+    sistemaVialLayer =
+        L.layerGroup([
+
+            vialVisible,
+            vialHitArea
+
+        ]);
+
+
+    /*
+       SE AGREGA AL CONTROL
+       PERO NO SE ACTIVA AUTOMÁTICAMENTE.
+    */
+
+
+    window.sistemaVial =
+        sistemaVialLayer;
+
+      window.vialVisible =
+        vialVisible;
+
+
+    console.log(
+        "Sistema Vial Propuesto listo."
+    );
+
+})
+
+
+.catch(function(error) {
+
+    console.error(
+        "ERROR SISTEMA VIAL:",
+        error
+    );
+
+});
+
+
+/* ==========================================================
+   19. ESCALA
+========================================================== */
+
+
+/* ==========================================================
+   BUSCADOR TERRITORIAL
+   Solo busca en:
+   - Sistema Vial Propuesto
+   - Habilitaciones Urbanas
+========================================================== */
+
+const indiceBuscador = { vial: [], habilitaciones: [] };
+let resultadoBusquedaActivo = null;
+
+function textoBuscar(valor) {
+    if (valor === null || valor === undefined) return "";
+    return String(valor).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+}
+
+function prepararIndiceBuscador() {
+    indiceBuscador.vial = [];
+    indiceBuscador.habilitaciones = [];
+
+    if (window.vialVisible?.eachLayer) {
+        window.vialVisible.eachLayer(function(layer) {
+            const p = layer.feature?.properties || {};
+            indiceBuscador.vial.push({
+                layer,
+                titulo: p.NOM_VIA || p.nom_via || "Vía",
+                detalle: p.M_VIA_PROP || p.m_via_prop || "",
+                texto: textoBuscar([
+                    p.NOM_VIA, p.nom_via,
+                    p.M_VIA_PROP, p.m_via_prop,
+                    p.M_SEC_PROP, p.m_sec_prop,
+                    p.CICLOVIA, p.ciclovia
+                ].join(" ")),
+                tipo: "SISTEMA VIAL"
+            });
+        });
+    }
+
+    if (window.habilitacionesUrbanas?.eachLayer) {
+        window.habilitacionesUrbanas.eachLayer(function(layer) {
+            const p = layer.feature?.properties || {};
+            indiceBuscador.habilitaciones.push({
+                layer,
+                titulo: p.NOMB_HAB_U || "Habilitación urbana",
+                detalle: [
+                    p.COD_HAB_UR ? "Código: " + p.COD_HAB_UR : "",
+                    p.TIPO_HAB_U ? "Tipo: " + p.TIPO_HAB_U : ""
+                ].filter(Boolean).join(" · "),
+                texto: textoBuscar([
+                    p.NOMB_HAB_U, p.COD_HAB_UR,
+                    p.TIPO_HAB_U, p.ESTADO
+                ].join(" ")),
+                tipo: "HABILITACIÓN URBANA"
+            });
+        });
+    }
+
+    console.log("Buscador actualizado:", {
+        vial: indiceBuscador.vial.length,
+        habilitaciones: indiceBuscador.habilitaciones.length
+    });
+}
+
+function limpiarResultadoBusqueda() {
+    if (!resultadoBusquedaActivo) return;
+    const item = resultadoBusquedaActivo;
+    if (item.tipo === "HABILITACIÓN URBANA" && window.habilitacionesUrbanas) {
+        window.habilitacionesUrbanas.resetStyle(item.layer);
+    }
+    if (item.tipo === "SISTEMA VIAL" && window.vialVisible) {
+        window.vialVisible.resetStyle(item.layer);
+    }
+    resultadoBusquedaActivo = null;
+}
+
+function resaltarResultado(item) {
+    limpiarResultadoBusqueda();
+    resultadoBusquedaActivo = item;
+
+    if (item.tipo === "HABILITACIÓN URBANA") {
+        item.layer.setStyle({
+            color: "#000000",
+            weight: 3,
+            opacity: 1,
+            fillColor: "#FFD54F",
+            fillOpacity: 0.45
+        });
+        item.layer.bringToFront();
+    }
+
+    if (item.tipo === "SISTEMA VIAL") {
+        item.layer.setStyle({ weight: 7, opacity: 1 });
+        item.layer.bringToFront();
+    }
+}
+
+function abrirResultadoBusqueda(item) {
+    const layer = item.layer;
+    if (!layer) return;
+
+    if (item.tipo === "SISTEMA VIAL" && window.sistemaVial && !map.hasLayer(window.sistemaVial)) {
+        map.addLayer(window.sistemaVial);
+    }
+    if (item.tipo === "HABILITACIÓN URBANA" && window.habilitacionesUrbanas && !map.hasLayer(window.habilitacionesUrbanas)) {
+        map.addLayer(window.habilitacionesUrbanas);
+    }
+
+    resaltarResultado(item);
+
+    if (layer.getBounds) {
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) map.fitBounds(bounds, { padding: [70,70], maxZoom: 17 });
+    } else if (layer.getLatLng) {
+        map.setView(layer.getLatLng(), 17);
+    }
+
+    setTimeout(function() {
+        if (layer.openPopup) layer.openPopup();
+    }, 350);
+}
+
+function ejecutarBusqueda() {
+    const tipo = document.getElementById("tipoBusqueda").value;
+    const consulta = textoBuscar(document.getElementById("textoBusqueda").value);
+    const resultado = document.getElementById("resultadoBusqueda");
+
+    if (consulta.length < 2) {
+        resultado.innerHTML = "Escribe al menos 2 caracteres.";
+        return;
+    }
+
+    prepararIndiceBuscador();
+    const indice = tipo === "vial" ? indiceBuscador.vial : indiceBuscador.habilitaciones;
+    const encontrados = indice.filter(item => item.texto.includes(consulta));
+
+    if (!encontrados.length) {
+        resultado.innerHTML = "<b>0</b> resultados encontrados.";
+        return;
+    }
+
+    resultado.innerHTML = "<b>" + encontrados.length + "</b> resultado(s).";
+    abrirResultadoBusqueda(encontrados[0]);
+
+    encontrados.slice(0,8).forEach(function(item) {
+        const boton = document.createElement("button");
+        boton.className = "resultado-item";
+        boton.innerHTML = "<b>" + item.titulo + "</b>" +
+            (item.detalle ? "<br><span>" + item.detalle + "</span>" : "");
+        boton.addEventListener("click", function() { abrirResultadoBusqueda(item); });
+        resultado.appendChild(boton);
+    });
+
+    if (encontrados.length > 8) {
+        const mas = document.createElement("div");
+        mas.className = "resultado-mas";
+        mas.textContent = "Mostrando los primeros 8 resultados.";
+        resultado.appendChild(mas);
+    }
+}
+
+const buscador = L.control({ position: "topleft" });
+buscador.onAdd = function() {
+    const div = L.DomUtil.create("div", "control-buscador");
+    div.innerHTML = `
+        <div class="titulo-buscador">🔎 BUSCADOR TERRITORIAL</div>
+        <select id="tipoBusqueda">
+            <option value="vial">Sistema Vial Propuesto</option>
+            <option value="habilitaciones">Habilitaciones Urbanas</option>
+        </select>
+        <input id="textoBusqueda" type="text" placeholder="Nombre, código, tipo...">
+        <button id="btnBuscar">BUSCAR</button>
+        <div id="resultadoBusqueda" class="resultado-buscador">Busca una vía o habilitación urbana.</div>
+    `;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+};
+buscador.addTo(map);
+
+document.addEventListener("click", function(event) {
+    if (event.target && event.target.id === "btnBuscar") ejecutarBusqueda();
+});
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Enter" && document.activeElement?.id === "textoBusqueda") ejecutarBusqueda();
+});
+
+setTimeout(prepararIndiceBuscador, 1500);
+setTimeout(prepararIndiceBuscador, 4000);
+
+console.log(
+    "Geovisor iniciado correctamente."
+);
+
+
+// Cargar Ámbito de Intervención
+cargarAmbitoIntervencion();
+
+// Cargar Habilitaciones Urbanas
+cargarHabilitacionesUrbanas();
+
+// Cargar Sectores Catastrales
+cargarSectoresCatastrales();
+
+// Crear leyenda temática principal (único panel temático)
+crearLeyendaTematica();
+
+
+
+</script>
+
+</body>
+</html>
