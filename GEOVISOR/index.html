@@ -409,6 +409,112 @@ html, body {
     color:#777;
 }
 
+
+/* DOCUMENTOS INSTITUCIONALES */
+.control-documentos{background:rgba(255,255,255,.97);border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.35);overflow:hidden;min-width:245px;border:1px solid #cfcfcf}
+.control-documentos .documentos-titulo{padding:9px 11px;font-size:12px;font-weight:800;background:#1F4E79;color:#fff;cursor:pointer;user-select:none}
+.control-documentos .documentos-lista{display:none;padding:7px;background:#fff}
+.control-documentos.abierto .documentos-lista{display:block}
+.control-documentos .documento-enlace{display:block;padding:8px 9px;margin:3px 0;border:1px solid #ddd;border-radius:4px;background:#fff;color:#222;text-decoration:none;font-size:11px;line-height:15px}
+.control-documentos .documento-enlace:hover{background:#f1f5f9;border-color:#9fb3c8}
+.control-documentos .documento-subtitulo{display:block;color:#666;font-size:9px;margin-top:2px}
+
+
+/* ==========================================================
+   ENCABEZADO INSTITUCIONAL
+========================================================== */
+.encabezado-institucional{
+    position:fixed;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    max-width:calc(100vw - 360px);
+    min-width:430px;
+    padding:8px 14px 8px 9px;
+    background:rgba(255,255,255,.96);
+    border:1px solid #cfcfcf;
+    border-radius:8px;
+    box-shadow:0 2px 9px rgba(0,0,0,.28);
+    box-sizing:border-box;
+}
+.encabezado-institucional img{
+    width:48px;
+    height:48px;
+    object-fit:contain;
+    flex:0 0 48px;
+}
+.encabezado-institucional .encabezado-texto{
+    text-align:left;
+    line-height:16px;
+}
+.encabezado-institucional .encabezado-titulo{
+    font-size:14px;
+    font-weight:800;
+    color:#1F4E79;
+}
+.encabezado-institucional .encabezado-subtitulo{
+    margin-top:2px;
+    font-size:10px;
+    color:#555;
+}
+.encabezado-institucional .encabezado-version{
+    margin-top:2px;
+    font-size:9px;
+    color:#777;
+}
+
+/* ==========================================================
+   INFORMACIÓN / CRÉDITOS
+========================================================== */
+.info-institucional{
+    background:rgba(255,255,255,.96);
+    padding:7px 10px;
+    border-radius:6px;
+    box-shadow:0 1px 6px rgba(0,0,0,.3);
+    font-size:10px;
+    line-height:14px;
+    color:#555;
+    max-width:280px;
+}
+.info-institucional strong{
+    color:#333;
+}
+.info-institucional .info-titulo{
+    color:#1F4E79;
+    font-weight:800;
+    font-size:11px;
+    margin-bottom:2px;
+}
+
+/* Ajuste para pantallas pequeñas */
+@media (max-width:700px){
+    .encabezado-institucional{
+        top:6px;
+        min-width:0;
+        width:calc(100vw - 120px);
+        max-width:none;
+        padding:6px 8px;
+    }
+    .encabezado-institucional img{
+        width:36px;
+        height:36px;
+        flex-basis:36px;
+    }
+    .encabezado-institucional .encabezado-titulo{
+        font-size:11px;
+        line-height:13px;
+    }
+    .encabezado-institucional .encabezado-subtitulo,
+    .encabezado-institucional .encabezado-version{
+        font-size:8px;
+        line-height:10px;
+    }
+}
+
 </style>
 
 <style id="transparencia-integrada-css">
@@ -2616,6 +2722,77 @@ cargarSectoresCatastrales();
 crearLeyendaTematica();
 
 
+
+
+/* DOCUMENTOS INSTITUCIONALES */
+const controlDocumentos = L.control({position:"topright"});
+
+controlDocumentos.onAdd = function(){
+    const div = L.DomUtil.create("div","control-documentos");
+
+    div.innerHTML = `
+        <div class="documentos-titulo">
+            📚 DOCUMENTOS INSTITUCIONALES
+            <span style="float:right;">▼</span>
+        </div>
+        <div class="documentos-lista">
+            <a class="documento-enlace"
+               href="../DOCUMENTOS/ORDENANZA%20MUNICIPAL-000018-2025-A-1.pdf"
+               target="_blank" rel="noopener">
+                📄 Ordenanza Municipal N.° 000018-2025-MPCH/A
+                <span class="documento-subtitulo">Norma de aprobación / actualización</span>
+            </a>
+            <a class="documento-enlace"
+               href="../DOCUMENTOS/ANEXO_3_REGLAMENTO_SVM_PDM-1.pdf"
+               target="_blank" rel="noopener">
+                📄 Anexo 3 – Reglamento del Sistema Vial Metropolitano
+                <span class="documento-subtitulo">Documento normativo</span>
+            </a>
+            <a class="documento-enlace"
+               href="../DOCUMENTOS/ANEXO%204%20REGLAMENTO%20DE%20ZONIFICACION_ACTUALIZACION_.pdf"
+               target="_blank" rel="noopener">
+                📄 Anexo 4 – Reglamento de Zonificación
+                <span class="documento-subtitulo">Documento normativo</span>
+            </a>
+        </div>
+    `;
+
+    const titulo = div.querySelector(".documentos-titulo");
+    titulo.addEventListener("click",function(){
+        div.classList.toggle("abierto");
+        titulo.querySelector("span").textContent =
+            div.classList.contains("abierto") ? "▲" : "▼";
+    });
+
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+};
+
+controlDocumentos.addTo(map);
+
+
+/* ==========================================================
+   INFORMACIÓN INSTITUCIONAL
+========================================================== */
+const controlInfoInstitucional = L.control({
+    position:"bottomleft"
+});
+
+controlInfoInstitucional.onAdd = function(){
+    const div = L.DomUtil.create("div","info-institucional");
+    div.innerHTML = `
+        <div class="info-titulo">GEOVISOR PDM CHICLAYO – LAMBAYEQUE</div>
+        <div><strong>Instrumento:</strong> PDM 2022–2042</div>
+        <div><strong>Aprobación / actualización:</strong> O.M. N.° 000018-2025-MPCH/A</div>
+        <div>Capas y documentos para consulta territorial.</div>
+    `;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+};
+
+controlInfoInstitucional.addTo(map);
 
 </script>
 
