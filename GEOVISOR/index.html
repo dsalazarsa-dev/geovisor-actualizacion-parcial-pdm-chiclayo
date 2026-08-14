@@ -943,6 +943,13 @@ function popupSistemaVial(feature, layer) {
             "m_via_prop"
         );
 
+    const codigoSeccion =
+        valorPropiedad(
+            p,
+            "M_COD_SEC",
+            "m_cod_sec"
+        );
+
     const seccion =
         valorPropiedad(
             p,
@@ -976,6 +983,11 @@ function popupSistemaVial(feature, layer) {
             </div>
 
             <div class="ficha-dato">
+                <div class="ficha-label">Código de sección</div>
+                <div class="ficha-valor">${escaparHTML(codigoSeccion)}</div>
+            </div>
+
+            <div class="ficha-dato">
                 <div class="ficha-label">Sección</div>
                 <div class="ficha-valor">${escaparHTML(seccion)}</div>
             </div>
@@ -991,7 +1003,6 @@ function popupSistemaVial(feature, layer) {
         </div>
     `, { maxWidth: 340, minWidth: 280, className: "popup-pdm-institucional" });
 }
-
 
 /* ==========================================================
    12. CAPAS BASE
